@@ -3,9 +3,9 @@ use std::{path::PathBuf, thread};
 use crossbeam_channel::{Receiver, Sender};
 use ignore::{WalkBuilder, types::TypesBuilder};
 
-use crate::types::Project;
+use crate::types::JetItem;
 
-pub fn query_files(roots: Vec<PathBuf>) -> Receiver<Project> {
+pub fn query_files(roots: Vec<PathBuf>) -> Receiver<JetItem> {
     let mut types_builder = TypesBuilder::new();
     types_builder.add("csproj", "*.csproj").unwrap();
     types_builder.add("sln", "*.sln").unwrap();
@@ -13,7 +13,7 @@ pub fn query_files(roots: Vec<PathBuf>) -> Receiver<Project> {
     types_builder.add("cargotoml", "Cargo.toml").unwrap();
     types_builder.select("all");
 
-    let (tx_item, rx_item): (Sender<Project>, Receiver<Project>) = crossbeam_channel::unbounded();
+    let (tx_item, rx_item): (Sender<JetItem>, Receiver<JetItem>) = crossbeam_channel::unbounded();
 
     thread::spawn(move || {
         for root in roots {
@@ -28,7 +28,7 @@ pub fn query_files(roots: Vec<PathBuf>) -> Receiver<Project> {
                 .filter_map(|e| e.ok())
                 .filter(|e| e.path().is_file())
             {
-                tx_item.send(Project::new(&root, entry.path())).unwrap()
+                tx_item.send(JetItem::new(&root, entry.path())).unwrap()
             }
         }
 

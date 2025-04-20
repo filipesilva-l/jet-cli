@@ -5,12 +5,12 @@ use std::{
 
 use skim::{ItemPreview, SkimItem};
 
-pub struct Project {
+pub struct JetItem {
     pub name: String,
     path: PathBuf,
 }
 
-impl Project {
+impl JetItem {
     pub fn new(root: &Path, path: &Path) -> Self {
         let path = path.parent().unwrap().to_owned();
         let name = path
@@ -23,7 +23,7 @@ impl Project {
     }
 }
 
-impl SkimItem for Project {
+impl SkimItem for JetItem {
     fn text(&self) -> std::borrow::Cow<str> {
         Cow::Borrowed(&self.name)
     }
