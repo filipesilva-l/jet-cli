@@ -1,50 +1,14 @@
 use std::{
-    borrow::Cow,
     env::{self},
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
-    sync::Arc,
-    thread::spawn,
 };
 
-use anyhow::{Context, Result, anyhow, bail};
-use ignore::{WalkBuilder, types::TypesBuilder};
-use skim::{
-    ItemPreview, Skim, SkimItem, SkimItemReceiver, SkimItemSender,
-    prelude::{SkimOptionsBuilder, unbounded},
-};
+use anyhow::*;
 
-struct Project {
-    pub name: String,
-    path: PathBuf,
-}
-
-impl Project {
-    fn new(root: &Path, path: &Path) -> Self {
-        let path = path.parent().unwrap().to_owned();
-        let name = path
-            .strip_prefix(root)
-            .expect("path did not have root as it start")
-            .to_string_lossy()
-            .into_owned();
-
-        Self { name, path }
-    }
-}
-
-impl SkimItem for Project {
-    fn text(&self) -> std::borrow::Cow<str> {
-        Cow::Borrowed(&self.name)
-    }
-
-    fn preview(&self, _context: skim::PreviewContext) -> skim::ItemPreview {
-        ItemPreview::Command(format!("ls -1 '{}'", self.path.to_str().unwrap()))
-    }
-
-    fn output(&self) -> Cow<str> {
-        Cow::Borrowed(self.path.to_str().unwrap())
-    }
-}
+mod query;
+mod selection;
+mod types;
 
 fn main() -> Result<()> {
     let roots: Vec<_> = env::var("JET_ROOTS")
@@ -67,56 +31,11 @@ fn main() -> Result<()> {
         }
     }
 
-    let mut types_builder = TypesBuilder::new();
-    types_builder.add("csproj", "*.csproj").unwrap();
-    types_builder.add("sln", "*.sln").unwrap();
-    types_builder.add("slnx", "*.slnx").unwrap();
-    types_builder.add("cargotoml", "Cargo.toml").unwrap();
-    types_builder.select("all");
+    let rx_item = query::query_files(roots);
 
-    let (tx_item, rx_item): (SkimItemSender, SkimItemReceiver) = unbounded();
+    let selected_path = selection::select(rx_item)?;
 
-    spawn(move || {
-        for root in roots {
-            let types = types_builder
-                .build()
-                .expect("could not create types for the walkbuilder");
-
-            for entry in WalkBuilder::new(&root)
-                .standard_filters(true)
-                .types(types)
-                .build()
-                .filter_map(|e| e.ok())
-                .filter(|e| e.path().is_file())
-            {
-                tx_item
-                    .send(Arc::new(Project::new(&root, entry.path())))
-                    .unwrap()
-            }
-        }
-
-        drop(tx_item);
-    });
-
-    let options = SkimOptionsBuilder::default()
-        .preview(Some(String::new()))
-        .build()
-        .unwrap();
-
-    let output = Skim::run_with(&options, Some(rx_item));
-
-    if let Some(output) = output {
-        if output.is_abort {
-            bail!("cancelled by the user")
-        }
-
-        let path = output
-            .selected_items
-            .first()
-            .ok_or(anyhow!("no project selected"))?;
-
-        println!("{}", path.output());
-    }
+    println!("{}", selected_path);
 
     Ok(())
 }
