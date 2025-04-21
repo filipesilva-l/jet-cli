@@ -14,9 +14,15 @@ impl Config {
         Self::try_from_file().with_context(|| "could not parse config from either file or env")
     }
 
-    fn try_from_file() -> Result<Self> {
+    pub fn get_config_file_path() -> Result<PathBuf> {
         let mut config_path = config_dir().ok_or(anyhow!("could not determine the config path"))?;
         config_path.push("jet-cli/config.toml");
+
+        Ok(config_path)
+    }
+
+    fn try_from_file() -> Result<Self> {
+        let config_path = Self::get_config_file_path()?;
 
         if !std::fs::exists(&config_path).unwrap_or(false) {
             bail!("config file {:?} not found", &config_path);

@@ -19,11 +19,14 @@ impl JetItem {
         }
         .to_owned();
 
-        let name = path
-            .strip_prefix(root)
-            .expect("path did not have root as it start")
-            .to_string_lossy()
-            .into_owned();
+        let name = if path != root {
+            path.strip_prefix(root)
+                .expect("path did not have root as it start")
+        } else {
+            &path
+        }
+        .to_string_lossy()
+        .into_owned();
 
         Self { name, path }
     }

@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 use crate::config::Config;
 
+mod edit;
 mod projects;
 mod repos;
 mod smart;
@@ -11,7 +12,7 @@ mod up;
 #[command(author, version, about, long_about = None, verbatim_doc_comment)]
 #[command(propagate_version = true)]
 pub enum Command {
-    /// Context-aware search that adapts based on current location:
+    /// DEFAULT - Context-aware search that adapts based on current location:
     /// - When inside a repository: Searches for projects within the current repository
     /// - When outside any repository: Searches for repositories within configured root directories
     Smart,
@@ -26,6 +27,9 @@ pub enum Command {
 
     /// Jumps to the root of the repository or, if not inside a repository, to the home directory
     Up,
+
+    /// Open's the config using the $EDITOR
+    Edit,
 }
 
 #[derive(Parser)]
@@ -45,6 +49,7 @@ impl Cli {
             Some(Command::Repos) => repos::run(config, self),
             Some(Command::Projects) => projects::run(config, self),
             Some(Command::Up) => up::run(),
+            Some(Command::Edit) => edit::run(),
         }
     }
 }
