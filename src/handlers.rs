@@ -6,7 +6,7 @@ use skim::{Skim, SkimItemReceiver, SkimItemSender, prelude::SkimOptionsBuilder};
 
 use crate::types::JetItem;
 
-pub fn select(rx_projects: Receiver<JetItem>) -> Result<String> {
+pub fn select(rx_jet: Receiver<JetItem>) -> Result<()> {
     let options = SkimOptionsBuilder::default()
         .preview(Some(String::new()))
         .build()
@@ -15,7 +15,7 @@ pub fn select(rx_projects: Receiver<JetItem>) -> Result<String> {
     let (tx_item, rx_item): (SkimItemSender, SkimItemReceiver) = unbounded();
 
     thread::spawn(move || {
-        while let Ok(proj) = rx_projects.recv() {
+        while let Ok(proj) = rx_jet.recv() {
             tx_item
                 .send(Arc::new(proj))
                 .expect("could not send project through channel");
@@ -26,7 +26,7 @@ pub fn select(rx_projects: Receiver<JetItem>) -> Result<String> {
 
     if let Some(output) = output {
         if output.is_abort {
-            bail!("cancelled by the user")
+            std::process::exit(1)
         }
 
         let path = output
@@ -34,8 +34,18 @@ pub fn select(rx_projects: Receiver<JetItem>) -> Result<String> {
             .first()
             .ok_or(anyhow!("no project selected"))?;
 
-        return Ok(path.output().into_owned());
+        println!("{}", path.output());
+
+        return Ok(());
     }
 
     bail!("no project selected");
+}
+
+pub fn print(rx_jet: Receiver<JetItem>) -> Result<()> {
+    while let Ok(proj) = rx_jet.recv() {
+        println!("{}", proj.path.to_str().unwrap());
+    }
+
+    Ok(())
 }

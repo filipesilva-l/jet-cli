@@ -1,17 +1,19 @@
 use anyhow::*;
+use clap::Parser;
+use cli::Cli;
 
+mod cli;
 mod config;
+mod handlers;
 mod query;
-mod selection;
 mod types;
 
 fn main() -> Result<()> {
+    human_panic::setup_panic!();
+
     let config = config::Config::new()?;
     config.validate()?;
 
-    let selected_path = selection::select(query::query_files(config.roots))?;
-
-    println!("{}", selected_path);
-
-    Ok(())
+    let cli = Cli::parse();
+    cli.run(&config)
 }

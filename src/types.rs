@@ -7,12 +7,18 @@ use skim::{ItemPreview, SkimItem};
 
 pub struct JetItem {
     pub name: String,
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 impl JetItem {
     pub fn new(root: &Path, path: &Path) -> Self {
-        let path = path.parent().unwrap().to_owned();
+        let path = if path.is_file() {
+            path.parent().unwrap()
+        } else {
+            path
+        }
+        .to_owned();
+
         let name = path
             .strip_prefix(root)
             .expect("path did not have root as it start")

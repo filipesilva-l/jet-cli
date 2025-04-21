@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use anyhow::{Context, Result, anyhow, bail};
 use dirs::config_dir;
@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Config {
-    pub roots: Vec<PathBuf>,
+    pub roots: Arc<Vec<PathBuf>>,
 }
 
 impl Config {
