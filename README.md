@@ -69,7 +69,7 @@ jet-cli edit       # Edit configuration
 ### Options
 
 ```
--n, --no_selection     # Outputs paths without interactive selection
+-n, --no-selection     # Outputs paths without interactive selection
 -h, --help             # Show help information
 -V, --version          # Show version information
 ```

@@ -38,7 +38,7 @@ pub struct Cli {
     command: Option<Command>,
 
     /// Disables the native fuzzy finder selection
-    #[arg(short = 'n', long = "no_selection", global = true)]
+    #[arg(short = 'n', long = "no-selection", global = true)]
     no_selection: bool,
 }
 
